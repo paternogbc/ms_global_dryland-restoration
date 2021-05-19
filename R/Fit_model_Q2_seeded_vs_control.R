@@ -10,11 +10,12 @@ library(patchwork)
 library(ggeffects)
 
 # Load data ---------------------------------------------------------------
-dat <- readRDS("data/processed/clean_PS_data-pooling_rep_early_time.RDs")
+dat <- readRDS("data/processed/revision/clean_PS_data-pooling_rep_early_time.RDs")
 
 # Ensure factors and rm undesired levels + group_by-----------------------------
 dat <- dat %>% 
   mutate(projectid         = as.factor(projectid),
+         region            = as.factor(region),
          siteid            = as.factor(siteid),
          treatmentid       = as.factor(treatmentid),
          speciesid         = as.factor(speciesid),
@@ -22,8 +23,18 @@ dat <- dat %>%
                                     yes = "seeded", 
                                     no = "unseeded")) %>% 
   droplevels() %>% 
-  select(projectid, siteid, treatmentid, tsr, speciesid, n, seed, seededrate, 
-         n_fail, n_succ, Ps)
+  select(projectid, 
+         region,
+         siteid, 
+         treatmentid, 
+         tsr, 
+         speciesid,
+         n, 
+         seed, 
+         seededrate, 
+         n_fail, 
+         n_succ, 
+         Ps)
 
 inspect_na(dat)
 glimpse(dat)
@@ -81,7 +92,7 @@ dc %>% group_by(projectid, siteid, speciesid) %>%
 
 # Create categorical seed rate
 dc$seed_c = cut(dc$seededrate, breaks = c(-Inf, 1, 10, 100, 1000, Inf), 
-                        labels = c("unseeded", "1-10", "10-100", "100-1000", "> 1000"))
+                labels = c("unseeded", "1-10", "10-100", "100-1000", "> 1000"))
 
 # Filter data into these projects
 dc %>% 
@@ -106,7 +117,7 @@ for (j in projs) {
       filter(siteid == i) %>% 
       pull(speciesid) %>% 
       unique() -> species
-      
+    
     for(s in species){ 
       filter(dc, projectid == j & siteid == i & speciesid == s) %>% 
         filter(seed == "unseeded") %>% 
@@ -122,8 +133,8 @@ for (j in projs) {
       
       pair <- filter(dc, projectid == j & siteid == i & speciesid == s &
                        treatmentid %in% c(control_trt, trt)) %>% mutate(
-        id = paste(projectid, siteid, speciesid, sep = "_")
-      )
+                         id = paste(projectid, siteid, speciesid, sep = "_")
+                       )
       
       pairs_ps <- rbind(pairs_ps, pair)
     }
@@ -163,7 +174,7 @@ g2 <-
   geom_histogram(alpha = 1, fill = "orange") +
   theme_bw(base_size = 16) +
   labs(y = "Frequency",
-       x = "Probability of success (Ps)")
+       x = "Species success")
 g2
 
 
@@ -174,18 +185,17 @@ gall <- g2 + g1  +
 gall
 
 ggsave(gall,
-       filename = "outputs/figures/Q2_supp_Fig_variables_description.png",
+       filename = "outputs/figures/revision/Q2_supp_Fig_variables_description.png",
        width = 9,
        height = 5)
 
 # Saved used data---------------------------------------------------------------
-saveRDS(dc_clean, "outputs/data/Q2_used_data.Rds")
-saveRDS(pairs_ps, "outputs/data/Q2_pairs_seeded_vs_unseeded.RDs")
+saveRDS(dc_clean, "outputs/data/revision/Q2_used_data.Rds")
+saveRDS(pairs_ps, "outputs/data/revision/Q2_pairs_seeded_vs_unseeded.RDs")
 
-# Fit model---------------------------------------------------------------------
+# Fit model ------------------------------------------------------------
 t.test(gp_seeded$Ps, gp_unseed$Ps, paired = TRUE) # paired t-test
-
-mod <- glmmTMB(Ps ~ seed  +
+mod <- glmmTMB(Ps ~ seed + 
                  (1 | projectid / siteid ),
                family = binomial(link = "logit"), 
                weights = n,
@@ -193,11 +203,10 @@ mod <- glmmTMB(Ps ~ seed  +
                data = dc_clean)
 summary(mod)
 
-
 # Model table------
 tab_model(mod, transform = NULL)
 tab_model(mod, transform = NULL, show.reflvl = TRUE, 
-          file = "outputs/tables/Q2_table_fitted_model.html")
+          file = "outputs/tables/revision/Q2_table_fitted_model.html")
 
 # Model diagnostic------------
 res <- simulateResiduals(mod)
@@ -233,8 +242,8 @@ ggplot() +
   theme(axis.title = element_text(size = 16)) +
   theme(text=element_text(family="Garamond")) + 
   labs(x = "Treatment",
-       y = "Success (%)")
+       y = "Present (%)")
 
 # Save model object-------------------------------------------------------------
-saveRDS(object = mod, file = "outputs/models/Q2_fitted_model.RDs")
-saveRDS(object = res, file = "outputs/models/Q2_simulated_residuals.Rds")
+saveRDS(object = mod, file = "outputs/models/revision/Q2_fitted_model.RDs")
+saveRDS(object = res, file = "outputs/models/revision/Q2_simulated_residuals.Rds")

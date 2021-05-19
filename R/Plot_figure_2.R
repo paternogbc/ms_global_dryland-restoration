@@ -1,3 +1,4 @@
+# Packages-----------------------------------------------------------
 library(tidyverse)
 library(here)
 library(patchwork)
@@ -7,8 +8,8 @@ library(glmmTMB)
 library(ggeffects)
 loadfonts()
 
-q2_pairs  <- readRDS(here("outputs","data", "Q2_pairs_seeded_vs_unseeded.RDs"))
-q2_model  <- readRDS(here("outputs","models", "Q2_fitted_model.RDs"))
+q2_pairs  <- readRDS(here("outputs","data/revision", "Q2_pairs_seeded_vs_unseeded.RDs"))
+q2_model  <- readRDS(here("outputs","models/revision", "Q2_fitted_model.RDs"))
 
 rd  <- readRDS(here("data","temp","merged_transformed_gazp_data.RDS"))
 stu <- openxlsx::read.xlsx(xlsxFile = here("data", "raw", "GAZP_Database-master", "projectdata.xlsx"), sheet = "study")
@@ -34,13 +35,13 @@ g2_A <-
   ggplot(d_raw, aes(x = ps*100)) +
   geom_histogram(fill = "#addd8e", color = "darkgreen", alpha = .75) +
   theme_classic(base_size = 16) +
-  labs(y = "Frequency", x = "Success (%)",
+  labs(y = "Frequency", x = "Present (%)",
        subtitle = "") +
   theme(text=element_text(family="Garamond")); g2_A
 
 # Figure 2. B-------------------------------------------------------------------
 # Predictions
-pmd <- ggeffect(q2_model, terms = c("seed"))
+pmd <- ggpredict(q2_model, terms = c("seed"))
 pmd
 plot(pmd)
 
@@ -52,7 +53,7 @@ g2_B <-
   scale_color_manual(values = c("#ca0020", "gray", "#0571b0")) +
   scale_x_discrete(limits = c("unseeded", "seeded")) +
   labs(x = "Treatment",
-       y = "Success (%)",
+       y = "Present (%)",
        title = "") +
   theme_classic(base_size = 16) +
   theme(axis.title = element_text(size = 16)) +
@@ -66,6 +67,6 @@ g2 <-
 
 ggsave(
   plot = g2,
-  filename = "outputs/figures/Figure_2_AB.png",
+  filename = "outputs/figures/revision/Figure_2_AB.png",
   width = 10, height = 6
 )

@@ -102,8 +102,8 @@ genuscheck <- function(miss_seed, full_data) {
         
         genus <- full_data$genus[ms]
         rates <- proj$studyseedrates %>%
-                             filter(projectid == full_data$projectid[ms]) %>%
-                             left_join(proj$species, by = "speciesid")
+          filter(projectid == full_data$projectid[ms]) %>%
+          left_join(proj$species, by = "speciesid")
         
         if(genus %in% rates$genus) {
           
